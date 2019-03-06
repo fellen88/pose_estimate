@@ -1,5 +1,5 @@
 /**************************************************
-Copyright(c) 2018-2018 fellen All rights reserved. 
+Copyright(c) 2018-2019 fellen All rights reserved. 
 Author: fellen
 Date:2018-08-20 
 Description:1¡¢Compute starting translation and rotation based on MomentOfInertiaEstimation descriptor
