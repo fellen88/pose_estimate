@@ -4,7 +4,7 @@
 //ros std消息
 #include <std_msgs/String.h>
 #include <std_msgs/Int8.h>
-// PCL specific includes
+//PCL specific includes
 #include <sensor_msgs/PointCloud2.h>
 
 class Publisher
@@ -15,7 +15,7 @@ class Publisher
   ros::Publisher ourpointcloud_pub; 
   sensor_msgs::PointCloud2 output;
   
-   //发送变换已更新消息
+  //发送变换已更新消息
   ros::Publisher Transformation_pub; 
   std_msgs::String TransformationMessage;
 
@@ -23,6 +23,5 @@ class Publisher
 
   Publisher(const ros::NodeHandle& node_handle);
   void init();
-
 };
 

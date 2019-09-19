@@ -97,23 +97,40 @@ int pose_estimate::EuclideanCluster(const PointCloud::Ptr cloud_Segmentation, co
   {
     //创建用于提取搜索方法的kdtree树对象 
     ROS_INFO("Start EuclideanCluster");
+
+      //  for (int i = 0; i < cloud_Segmentation->points.size(); ++i)
+    //   {
+    //     printf("x = %f", cloud_Segmentation->points[i].x);
+    //      printf("y = %f", cloud_Segmentation->points[i].y);
+    //       printf("z = %f \n", cloud_Segmentation->points[i].z);
+        
+    //   }
+    //   ROS_INFO("print end");
+
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
     tree->setInputCloud(cloud_Segmentation);
+    // ROS_INFO("set input end");
 
     std::vector<pcl::PointIndices> cluster_indices;
+    //  printf("indices = %d", cluster_indices.size());
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec; //欧式聚类对象
     ec.setClusterTolerance(0.01);                      //设置近邻搜索的搜索半径为2cm
-    ec.setMinClusterSize(100);                         //设置一个聚类需要的最少的点数目为10
+    ec.setMinClusterSize(1);                         //设置一个聚类需要的最少的点数目为10
     ec.setMaxClusterSize(1000000);                     //设置一个聚类需要的最大点数目为250000
     ec.setSearchMethod(tree);                          //设置点云的搜索机制
     ec.setInputCloud(cloud_Segmentation);              //输入点云
-    ec.extract(cluster_indices);                   //从点云中提取聚类，并将点云索引保存在cluster_indices中
-                   
+    ec.extract(cluster_indices);                        //从点云中提取聚类，并将点云索引保存在cluster_indices中
+    // ROS_INFO("extract end");               
+
     //容器中的点云的索引第一个为物体点云数据
+    //if(cluster_indices > 0)
+    //printf("indices = %d", cluster_indices.size());
     std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin();
-    
+   
     for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
+    {
       cloud_EuclideanCluster->points.push_back(cloud_Segmentation->points[*pit]);
+    }
     //设置保存点云的属性问题
     cloud_EuclideanCluster->width = cloud_EuclideanCluster->points.size();
     cloud_EuclideanCluster->height = 1;

@@ -12,7 +12,6 @@
 
 #include <pcl/features/moment_of_inertia_estimation.h>
 
-
 #ifndef REGISTRATION_H
 #define REGISTRATION_H  
 
@@ -29,6 +28,5 @@ class registration
     registration(bool DebugVisualizer);
     float prePairAlign(const PointCloud::Ptr cloud_src,const PointCloud::Ptr cloud_tgt, PointCloud::Ptr transformed_cloud, bool downsample);
     void pairAlign (const PointCloud::Ptr cloud_src, const PointCloud::Ptr cloud_tgt, PointCloud::Ptr output, Eigen::Matrix4f &final_transform, bool downsample);
-
 };
 #endif

@@ -11,14 +11,14 @@ float registration::prePairAlign(const PointCloud::Ptr cloud_src,const PointClou
 {
   PointCloud::Ptr src (new PointCloud); //创建点云指针
   PointCloud::Ptr tgt (new PointCloud);
-  pcl::VoxelGrid<PointT> grid; //VoxelGrid 把一个给定的点云，聚集在一个局部的3D网格上,并下采样和滤波点云数据
+  pcl::VoxelGrid<PointT> grid;          //VoxelGrid 把一个给定的点云，聚集在一个局部的3D网格上,并下采样和滤波点云数据
   if (downsample) //下采样
   {
     grid.setLeafSize (0.005, 0.005, 0.005); //设置体元网格的叶子大小
-        //下采样 源点云
+    //下采样 源点云
     grid.setInputCloud (cloud_src); //设置输入点云
     grid.filter (*src); //下采样和滤波，并存储在src中
-        //下采样 目标点云
+    //下采样 目标点云
     grid.setInputCloud (cloud_tgt);
     grid.filter (*tgt);
 
@@ -218,10 +218,10 @@ void registration::pairAlign (const PointCloud::Ptr cloud_src, const PointCloud:
   if (downsample) //下采样
   {
     grid.setLeafSize (0.005, 0.005, 0.005); //设置体元网格的叶子大小
-        //下采样 源点云
+    //下采样 源点云
     grid.setInputCloud (cloud_src); //设置输入点云
     grid.filter (*src); //下采样和滤波，并存储在src中
-        //下采样 目标点云
+    //下采样 目标点云
     grid.setInputCloud (cloud_tgt);
     grid.filter (*tgt);
   }
@@ -284,7 +284,7 @@ void registration::pairAlign (const PointCloud::Ptr cloud_src, const PointCloud:
     // if (fabs ((reg.getLastIncrementalTransformation () - prev).sum ()) < reg.getTransformationEpsilon ())
     //    break;
        
-          //如果这次变换和上次变换的误差比阈值小，通过减小最大的对应点距离的方法来进一步细化
+    //如果这次变换和上次变换的误差比阈值小，通过减小最大的对应点距离的方法来进一步细化
     if (fabs ((reg.getLastIncrementalTransformation () - prev).sum ()) < reg.getTransformationEpsilon ())
       reg.setMaxCorrespondenceDistance (reg.getMaxCorrespondenceDistance () - 0.001); //减小对应点之间的最大距离（上面设置过）
      prev = reg.getLastIncrementalTransformation (); //上一次变换的误差
@@ -298,7 +298,7 @@ void registration::pairAlign (const PointCloud::Ptr cloud_src, const PointCloud:
     }
   }
 
- PCL_INFO ("Iteration Nr. %d.\n", NumIteration); //命令行显示迭代的次数
+  PCL_INFO ("Iteration Nr. %d.\n", NumIteration); //命令行显示迭代的次数
   targetToSource = Ti.inverse(); //计算从目标点云到源点云的变换矩阵
   pcl::transformPointCloud (*cloud_tgt, *output, targetToSource); //将目标点云 变换回到 源点云帧
 

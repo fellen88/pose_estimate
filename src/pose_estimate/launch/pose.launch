@@ -1,0 +1,5 @@
+<launch>
+
+  <node name="Locate" pkg="pose_estimate" type="pose_estimate" output="screen"/>
+
+</launch>

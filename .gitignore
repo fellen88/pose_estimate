@@ -2,12 +2,15 @@
 /devel/
 devel_isolated/
 el/
+doc/
 el_isolated/
 src/cv_bridge
 src/object_segment
 src/ocr
 src/offline
 src/orbbec_camera
+src/robot
+
 
 src/CMakeList.txt
 src/pose_estimate/3Dmodels
@@ -15,4 +18,6 @@ src/pose_estimate/3Dmodels
 .catkin_workspace
 CMakeLists.txt
 start.sh
+run.sh
+
 
