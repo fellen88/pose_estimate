@@ -9,8 +9,8 @@ src/object_segment
 src/ocr
 src/offline
 src/orbbec_camera
+src/phoxi_camera
 src/robot
-
 
 src/CMakeList.txt
 src/pose_estimate/3Dmodels
