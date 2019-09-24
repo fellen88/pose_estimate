@@ -1,7 +1,7 @@
 
 #include <ros/ros.h>
 
-#include "MyPointRepresentation.h"
+#include "3d_features.h"
 
 //tf×ø±êÏµ±ä»»
 #include <tf/transform_broadcaster.h>

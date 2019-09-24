@@ -21,7 +21,8 @@
 #include <pcl/segmentation/extract_clusters.h>
 
 #include "rviz_visualizer.h"
-#include "registration.h"
+#include "3d_features.h"
+#include "3d_registration.h"
 
 #ifndef POSE_ESTIMATE_H
 #define POSE_ESTIMATE_H  
@@ -41,6 +42,7 @@ class pose_estimate
     Eigen::Matrix3d Rotation_matrix;
 
     //PairAlign transformation matrix
+    Eigen::Matrix4f Pre_PairAlign_Transformation;
     Eigen::Matrix4f PairAlign_Transformation;
     Eigen::Matrix4f GlobalTransformation;
     Eigen::Matrix4f UpsideDownTransformation;

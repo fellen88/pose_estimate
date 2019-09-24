@@ -128,8 +128,9 @@ void Listener::Mask_Callback(const sensor_msgs::ImageConstPtr& msg, ros::NodeHan
   this->depth_sub_.shutdown();
   //深度图和mask都已准备就绪，进行匹配
   ROS_INFO("Start Alignment");
-  int ErrorCode = pose_est_.Alignment();
-  if(1 == ErrorCode || 2 == ErrorCode)
+  std_msgs::Int8 ErrorCode;
+  ErrorCode.data = pose_est_.Alignment();
+  if(1 == ErrorCode.data || 2 == ErrorCode.data)
   {
      publisher_.PointCloudError_pub.publish(ErrorCode);
   }

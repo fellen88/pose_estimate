@@ -1,10 +1,16 @@
-#include "MyPointRepresentation.h"
-
 //可视化
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/histogram_visualizer.h> //直方图的可视化
+#include <pcl/visualization/pcl_plotter.h>// 直方图的可视化 方法2
 
 #ifndef PCL_VISUALIZER_H
 #define PCL_VISUALIZER_H  
+
+//pcl类型名简化
+typedef pcl::PointXYZ PointT;
+typedef pcl::PointCloud<PointT> PointCloud;
+typedef pcl::PointNormal PointNormalT;
+typedef pcl::PointCloud<PointNormalT> PointCloudWithNormals;
 
 class pcl_visualizer
 {

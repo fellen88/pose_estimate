@@ -203,7 +203,7 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-set(SRCS src/main.cpp src/pose_estimate.cpp src/registration.cpp src/listener.cpp src/publisher.cpp src/rviz_visualizer.cpp src/pcl_visualizer.cpp)
+set(SRCS src/main.cpp src/pose_estimate.cpp src/3d_features.cpp src/3d_registration.cpp src/listener.cpp src/publisher.cpp src/rviz_visualizer.cpp src/pcl_visualizer.cpp)
 add_executable(pose_estimate ${SRCS})
 target_link_libraries(pose_estimate ${catkin_LIBRARIES})
 find_package(OpenCV REQUIRED)

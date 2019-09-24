@@ -247,7 +247,10 @@ int pose_estimate::Alignment()
     ROS_INFO("start Alignment");
     {
       pcl::ScopeTime scope_time("*PrePairAlign");//计算算法运行时间
-      AngleObjectZtoCameraZ = registration_.prePairAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess,true);
+      //AngleObjectZtoCameraZ = registration_.prePairAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess,true);
+      registration_.prePairAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess, Pre_PairAlign_Transformation, true);
+      registration_.SAC_IA_PareAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess, Pre_PairAlign_Transformation, true);
+
     }
     //ICP匹配
     {
