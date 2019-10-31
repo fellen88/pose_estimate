@@ -19,7 +19,8 @@ void Timer_PoseVisualization(const ros::TimerEvent& event, Listener *listener)
   transform.setRotation (tf::createQuaternionFromRPY (listener->pose_est_.thetax,
                                                       listener->pose_est_.thetay, 
                                                       listener->pose_est_.thetaz));
-  br.sendTransform (tf::StampedTransform(transform, ros::Time::now (),"/camera_rgb_optical_frame", "/object"));
+  //br.sendTransform (tf::StampedTransform(transform, ros::Time::now (),"/camera_rgb_optical_frame", "/object"));
+  br.sendTransform (tf::StampedTransform(transform, ros::Time::now (),"/PhoXi3Dscanner_sensor", "/object"));
 }
 
 int main (int argc, char** argv)

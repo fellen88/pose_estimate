@@ -16,15 +16,18 @@ void Listener::init()  //Listener类的init()方法
   //subs_.push_back(node_handle_.subscribe<std_msgs::String>("chatter", 1000, boost::bind(&Listener::chatterCallback, this, _1, "User 1")));
   subs_.push_back(node_handle_.subscribe<sensor_msgs::Image>("/segment/segment_image", 1, boost::bind(&Listener::Mask_Callback, this, _1, node_handle_)));
   //订阅深度图
-  depth_sub_ = node_handle_.subscribe<sensor_msgs::Image>("/camera/depth_registered/sw_registered/image_rect_raw", 1 , boost::bind(&Listener::Depth_Callback, this, _1));
+  //cloud_sub_ = node_handle_.subscribe("/camera/depth_registered/points", 1, &Listener::Cloud_Callback, this);
+  depth_sub_ = node_handle_.subscribe<sensor_msgs::Image>("/phoxi_camera/depth_map", 1 , boost::bind(&Listener::Depth_Callback, this, _1));
   //订阅RC消息，采集图像
   RobotControl_sub1_ = node_handle_.subscribe<std_msgs::Int8>("/command/recog_command", 1, boost::bind(&Listener::CaptureImage_Callback1, this, _1));
-  RobotControl_sub_ = node_handle_.subscribe<std_msgs::String>("/TCPServer/Ready", 1,  boost::bind(&Listener::CaptureImage_Callback, this, _1));
+  RobotControl_sub_ = node_handle_.subscribe<std_msgs::String>("/Ready", 1,  boost::bind(&Listener::CaptureImage_Callback, this, _1));
   //订阅label
   Label_sub_ = node_handle_.subscribe<std_msgs::String>("/segment/segment_class", 1, boost::bind(&Listener::Label_Callback, this, _1)); 
   //订阅相机发布点云数据
   //cloud_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("/camera/depth_registered/points", 1, boost::bind(&Listener::Cloud_Callback, this, _1));
-  cloud_sub_ = node_handle_.subscribe("/camera/depth_registered/points", 1, &Listener::Cloud_Callback, this);
+  //cloud_sub_ = node_handle_.subscribe("/camera/depth_registered/points", 1, &Listener::Cloud_Callback, this);//astra canera
+  cloud_sub_ = node_handle_.subscribe("/phoxi_camera/pointcloud", 1, &Listener::Cloud_Callback, this);
+  
 }
 
 void Listener::CaptureImage_Callback1(const std_msgs::Int8::ConstPtr& msg)
@@ -71,7 +74,7 @@ void Listener::Label_Callback(const std_msgs::String::ConstPtr& msg)
 //depth图显示的回调函数    
 void Listener::Depth_Callback(const sensor_msgs::ImageConstPtr& msg)
 {
-  if(true == pose_est_.bSaveImage)
+  //if(true == pose_est_.bSaveImage)
   {
      pose_est_.bSaveImage = false; 
      pose_est_.bUpdatingImage = true;
@@ -88,13 +91,13 @@ void Listener::Depth_Callback(const sensor_msgs::ImageConstPtr& msg)
     pose_est_.bUpdatingImage = false;
     ROS_INFO("Stop saving depth image");
   // //可视化深度图
-  // if(true == DEBUG_VISUALIZER)
+  // //if(true == DEBUG_VISUALIZER)
   // {
   //   //Draw an example circle on the video stream
-  //   if (depth_ptr->image.rows > 60 && depth_ptr->image.cols > 60)
-  //     cv::circle(depth_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
+  //   if (pose_est_.depth_ptr->image.rows > 60 && pose_est_.depth_ptr->image.cols > 60)
+  //     cv::circle(pose_est_.depth_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
   //   //Update GUI Window
-  //   cv::imshow("depth image", depth_ptr->image);
+  //   cv::imshow("depth image", pose_est_.depth_ptr->image);
   //   cv::waitKey(3);
   // }
   }
@@ -140,7 +143,8 @@ void Listener::Mask_Callback(const sensor_msgs::ImageConstPtr& msg, ros::NodeHan
   }
   
   //恢复订阅相机深度图
-  depth_sub_ = node_handle.subscribe("/camera/depth_registered/sw_registered/image_rect_raw", 1 , &Listener::Depth_Callback, this);
+  //depth_sub_ = node_handle.subscribe("/camera/depth_registered/sw_registered/image_rect_raw", 1 , &Listener::Depth_Callback, this);
+  depth_sub_ = node_handle.subscribe("/phoxi_camera/depth_map", 1 , &Listener::Depth_Callback, this);
 }
 
 //订阅点云及可视化
@@ -162,7 +166,8 @@ void Listener::Cloud_Callback(const sensor_msgs::PointCloud2ConstPtr& msg)
     pcl::toROSMsg(cloud,output);
 
     output.header.stamp = ros::Time::now();
-    output.header.frame_id = "/camera_rgb_optical_frame";
+    //output.header.frame_id = "/camera_rgb_optical_frame";
+    output.header.frame_id = "PhoXi3Dscanner_sensor";
     publisher_.ourpointcloud_pub.publish(output);
     ROS_INFO("Stop saving pointcloud");
     pose_est_.bSaveCloud = false;

@@ -12,8 +12,8 @@ pose_estimate::pose_estimate(const ros::NodeHandle& nodehandle, bool DebugVisual
                CloudTransformedTarget(new pcl::PointCloud<pcl::PointXYZ>)
 {
   label = "bottle_milktea";
-  depth_cols = 640;
-  depth_rows = 480;
+  depth_cols = 2064;
+  depth_rows = 1544;
   camera_factor = 1000;
   camera_cx = 310.535;
   camera_cy = 239.405;
@@ -35,19 +35,23 @@ pose_estimate::pose_estimate(const ros::NodeHandle& nodehandle, bool DebugVisual
 
 int pose_estimate::segmentation()
 {
+  ROS_INFO("start segmentation");
   for(int ImgWidth = 0; ImgWidth < depth_rows; ImgWidth++)
   {
     for(int ImgHeight = 0; ImgHeight < depth_cols; ImgHeight++ )
     {
       //获取深度图中对应点的深度值
       float d = depth_ptr->image.at<float>(ImgWidth,ImgHeight);
+      d = d / 1000;
+
       //有效范围内的点
-      if((d > 0.4*camera_factor) && (d < 2*camera_factor))
+      //if((d > 0.4*camera_factor) && (d < 2*camera_factor))
       {
 		  //判断mask中是否是物体的点
 		  if(mask_ptr != 0)
 		  {
 		    unsigned char t = mask_ptr->image.at<unsigned char>(ImgWidth,ImgHeight);
+        ROS_INFO("d = %d", t);
 		    if(t == 0)
 		    continue;
 		  }
@@ -187,7 +191,7 @@ int pose_estimate::Alignment()
     }
  
     //根据label提取物体模型
-    std::string ModelPath = "/home/siasun/Desktop/RobGrab/src/pose_estimate/3Dmodels/";
+    std::string ModelPath = "/home/siasuncv/RobGrab/src/pose_estimate/3Dmodels/";
     //std::string ModelPath = "/home/model/catkin_ws2/src/pose_estimation/3Dmodels/";
     ModelPath = ModelPath + label + "_model.pcd";
      //std::cout << "ModelPath : " << ModelPath << endl;
@@ -217,25 +221,25 @@ int pose_estimate::Alignment()
 		cout << CloudModelAfterSample->points.size()<<endl;
 		pointRatio = 100*(CloudEuclideanClusterAfterSample->points.size())/CloudModelAfterSample->points.size();
     ROS_INFO("CloudMask/CloudModel = %d !", pointRatio);
-    if(pointRatio > 60)
-      {
-        CloudEuclideanCluster->points.clear();
-        CloudEuclideanClusterAfterSample->points.clear();
-        ROS_INFO("CloudMask/CloudModel > 0.6 !");
-        printf("******************************************************");
-        printf("\n");
-        return 1;
-      }
-      else if(pointRatio < 20)
-      {
-        CloudEuclideanCluster->points.clear();
-        CloudEuclideanClusterAfterSample->points.clear();
-        ROS_INFO("CloudMask/CloudModel < 0.2 !");
-        printf("******************************************************");
-        printf("\n");
-        return 2;
-      }
-    }    
+    // if(pointRatio > 60)
+    //   {
+    //     CloudEuclideanCluster->points.clear();
+    //     CloudEuclideanClusterAfterSample->points.clear();
+    //     ROS_INFO("CloudMask/CloudModel > 0.6 !");
+    //     printf("******************************************************");
+    //     printf("\n");
+    //     return 1;
+    //   }
+    //   else if(pointRatio < 20)
+    //   {
+    //     CloudEuclideanCluster->points.clear();
+    //     CloudEuclideanClusterAfterSample->points.clear();
+    //     ROS_INFO("CloudMask/CloudModel < 0.2 !");
+    //     printf("******************************************************");
+    //     printf("\n");
+    //     return 2;
+    //   }
+     }    
     //cout << "points loaded from Model =" << CloudModel->width * CloudModel->height <<endl;
    
     if(true == DEBUG_VISUALIZER)
@@ -290,27 +294,27 @@ int pose_estimate::Alignment()
   printf("******************************************************");
   printf("\n");
 
-  UpsideDownTransformation(0, 0) = 1;
-  UpsideDownTransformation(1, 1) = -1;
-  UpsideDownTransformation(2, 2) = -1;
-  UpsideDownTransformation(3, 3) = 1;
-  if(AngleObjectZtoCameraZ > 90)
-  {
-      ROS_INFO("AngleObjectZtoCameraZ > 90 , convert!");
-      GlobalTransformationForGrasp = GlobalTransformation*UpsideDownTransformation;
-      //GlobalTransformationForGrasp = GlobalTransformation;GlobalTransformation.inverse()*
-      //GlobalTransformationForGrasp = GlobalTransformation;
+  // UpsideDownTransformation(0, 0) = 1;
+  // UpsideDownTransformation(1, 1) = -1;
+  // UpsideDownTransformation(2, 2) = -1;
+  // UpsideDownTransformation(3, 3) = 1;
+  // if(AngleObjectZtoCameraZ > 90)
+  // {
+  //     ROS_INFO("AngleObjectZtoCameraZ > 90 , convert!");
+  //     GlobalTransformationForGrasp = GlobalTransformation*UpsideDownTransformation;
+  //     //GlobalTransformationForGrasp = GlobalTransformation;GlobalTransformation.inverse()*
+  //     //GlobalTransformationForGrasp = GlobalTransformation;
 
-      std::cout << "The Global Rotation and translation matrices are : \n" << std::endl;
-      printf("\n");
-      printf("    | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(0, 0), GlobalTransformationForGrasp(0, 1), GlobalTransformationForGrasp(0, 2), GlobalTransformationForGrasp(0, 3));
-      printf("R = | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(1, 0), GlobalTransformationForGrasp(1, 1), GlobalTransformationForGrasp(1, 2), GlobalTransformationForGrasp(1, 3));
-      printf("    | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(2, 0), GlobalTransformationForGrasp(2, 1), GlobalTransformationForGrasp(2, 2), GlobalTransformationForGrasp(2, 3));
-      printf("    | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(3, 0), GlobalTransformationForGrasp(3, 1), GlobalTransformationForGrasp(3, 2), GlobalTransformationForGrasp(3, 3));
-      printf("\n");
-      printf("******************************************************");
-  }
-  else
+  //     std::cout << "The Global Rotation and translation matrices are : \n" << std::endl;
+  //     printf("\n");
+  //     printf("    | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(0, 0), GlobalTransformationForGrasp(0, 1), GlobalTransformationForGrasp(0, 2), GlobalTransformationForGrasp(0, 3));
+  //     printf("R = | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(1, 0), GlobalTransformationForGrasp(1, 1), GlobalTransformationForGrasp(1, 2), GlobalTransformationForGrasp(1, 3));
+  //     printf("    | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(2, 0), GlobalTransformationForGrasp(2, 1), GlobalTransformationForGrasp(2, 2), GlobalTransformationForGrasp(2, 3));
+  //     printf("    | %6.3f %6.3f %6.3f %6.3f | \n", GlobalTransformationForGrasp(3, 0), GlobalTransformationForGrasp(3, 1), GlobalTransformationForGrasp(3, 2), GlobalTransformationForGrasp(3, 3));
+  //     printf("\n");
+  //     printf("******************************************************");
+  // }
+  // else
   {
     GlobalTransformationForGrasp = GlobalTransformation;
   }
