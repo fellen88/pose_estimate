@@ -19,31 +19,14 @@ void Listener::init()  //Listener类的init()方法
   //cloud_sub_ = node_handle_.subscribe("/camera/depth_registered/points", 1, &Listener::Cloud_Callback, this);
   depth_sub_ = node_handle_.subscribe<sensor_msgs::Image>("/phoxi_camera/depth_map", 1 , boost::bind(&Listener::Depth_Callback, this, _1));
   //订阅RC消息，采集图像
-  RobotControl_sub1_ = node_handle_.subscribe<std_msgs::Int8>("/command/recog_command", 1, boost::bind(&Listener::CaptureImage_Callback1, this, _1));
   RobotControl_sub_ = node_handle_.subscribe<std_msgs::String>("/Ready", 1,  boost::bind(&Listener::CaptureImage_Callback, this, _1));
   //订阅label
   Label_sub_ = node_handle_.subscribe<std_msgs::String>("/segment/segment_class", 1, boost::bind(&Listener::Label_Callback, this, _1)); 
   //订阅相机发布点云数据
   //cloud_sub_ = node_handle_.subscribe<sensor_msgs::PointCloud2>("/camera/depth_registered/points", 1, boost::bind(&Listener::Cloud_Callback, this, _1));
   //cloud_sub_ = node_handle_.subscribe("/camera/depth_registered/points", 1, &Listener::Cloud_Callback, this);//astra canera
-  cloud_sub_ = node_handle_.subscribe("/phoxi_camera/pointcloud", 1, &Listener::Cloud_Callback, this);
+  //cloud_sub_ = node_handle_.subscribe("/phoxi_camera/pointcloud", 1, &Listener::Cloud_Callback, this);
   
-}
-
-void Listener::CaptureImage_Callback1(const std_msgs::Int8::ConstPtr& msg)
-{
-  ROS_INFO("RobotControl Callback1");
-  if(1 == msg->data)
-  {
-    if(false == pose_est_.bSaveImage)
-    {
-      pose_est_.bSaveImage = true;
-    }
-    if(false == pose_est_.bSaveCloud)
-    {
-      pose_est_.bSaveCloud = true;
-    }
-  }
 }
 
 void Listener::CaptureImage_Callback(const std_msgs::String::ConstPtr& msg)
@@ -70,8 +53,7 @@ void Listener::Label_Callback(const std_msgs::String::ConstPtr& msg)
   ROS_INFO("I heard: [%s]", msg->data.c_str());
   pose_est_.label =  msg->data.c_str();
 }
-
-//depth图显示的回调函数    
+   
 void Listener::Depth_Callback(const sensor_msgs::ImageConstPtr& msg)
 {
   //if(true == pose_est_.bSaveImage)
@@ -90,6 +72,43 @@ void Listener::Depth_Callback(const sensor_msgs::ImageConstPtr& msg)
     }
     pose_est_.bUpdatingImage = false;
     ROS_INFO("Stop saving depth image");
+
+    int camera_factor = 1000;
+    float camera_cx = 1024.93; 
+    float camera_cy = 782.256;
+    float camera_fx = 2240.68;
+    float camera_fy = 2240.68;
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+
+    for(int ImgWidth = 0; ImgWidth < 1544; ImgWidth++)
+    {
+      for(int ImgHeight = 0; ImgHeight < 2064; ImgHeight++ )
+      {
+        //获取深度图中对应点的深度值
+        float d = pose_est_.depth_ptr->image.at<float>(ImgWidth,ImgHeight);
+
+        //有效范围内的点
+        if((d > 0.5*camera_factor) && (d < 1.2*camera_factor))
+        {
+          //计算这个点的空间坐标
+          pcl::PointXYZ PointWorld;
+          PointWorld.z = double(d)/camera_factor;
+          //ROS_INFO("D = %f", d);
+          PointWorld.x = (ImgHeight - camera_cx)*PointWorld.z/camera_fx;
+          PointWorld.y = (ImgWidth - camera_cy)*PointWorld.z/camera_fy;
+          cloud.points.push_back(PointWorld);
+        }
+      }
+    }
+
+    //Convert the cloud to ROS message
+    sensor_msgs::PointCloud2 output;
+    pcl::toROSMsg(cloud,output);
+
+    output.header.stamp = ros::Time::now();
+    //output.header.frame_id = "/camera_rgb_optical_frame";
+    output.header.frame_id = "PhoXi3Dscanner_sensor";
+    publisher_.ourpointcloud_pub.publish(output);
   // //可视化深度图
   // //if(true == DEBUG_VISUALIZER)
   // {
@@ -140,6 +159,22 @@ void Listener::Mask_Callback(const sensor_msgs::ImageConstPtr& msg, ros::NodeHan
   else
   {
     publisher_.Transformation_pub.publish(publisher_.TransformationMessage);
+
+    //发布变换厚的物体模型
+    pcl::PointCloud<pcl::PointXYZRGB> Color_model_transformed;
+    pcl::copyPointCloud(*pose_est_.CloudTransformedTarget, Color_model_transformed);
+    for (int j = 0; j < Color_model_transformed.size(); j++) 
+    {
+      Color_model_transformed.points[j].r = 0;
+      Color_model_transformed.points[j].g = 255;
+      Color_model_transformed.points[j].b = 0;
+    }
+    sensor_msgs::PointCloud2 model_transformed;
+    pcl::toROSMsg(Color_model_transformed, model_transformed);
+    model_transformed.header.stamp = ros::Time::now();
+    //output.header.frame_id = "/camera_rgb_optical_frame";
+    model_transformed.header.frame_id = "PhoXi3Dscanner_sensor";
+    publisher_.ObjectModel_pub.publish(model_transformed);
   }
   
   //恢复订阅相机深度图
@@ -148,31 +183,40 @@ void Listener::Mask_Callback(const sensor_msgs::ImageConstPtr& msg, ros::NodeHan
 }
 
 //订阅点云及可视化
-void Listener::Cloud_Callback(const sensor_msgs::PointCloud2ConstPtr& msg)
-{
-  if(true == pose_est_.bSaveCloud)
-  {
-    ROS_INFO("Start saving pointcloud");
-    pcl::PointCloud<pcl::PointXYZRGB> cloud; // With color
-    pcl::fromROSMsg(*msg, cloud); // sensor_msgs::PointCloud2 ----> pcl::PointCloud<T>
-    // pose_est_. registration_.pcl_v_.p->removePointCloud ("cloud test");
-    // pose_est_. registration_.pcl_v_.p->addPointCloud<pcl::PointXYZRGB>(cloud.makeShared(), "cloud test");
-    // pose_est_. registration_.pcl_v_.p->spin ();
-    //pcl::io::savePCDFileASCII("orbbec_cloud.pcd", cloud);	
-    //ROS_INFO("pointcloud saved");
+// void Listener::Cloud_Callback(const sensor_msgs::PointCloud2ConstPtr& msg)
+// {
+//   if(true == pose_est_.bSaveCloud)
+//   {
+//     ROS_INFO("Start saving pointcloud");
+//     //pcl::PointCloud<pcl::PointXYZRGB> cloud; // With color
+//     pcl::PointCloud<pcl::PointXYZ> cloud; // Without color
+//     pcl::PointCloud<pcl::PointXYZ> CloudAfterSample; // Without color
+//     pcl::fromROSMsg(*msg, cloud); // sensor_msgs::PointCloud2 ----> pcl::PointCloud<T>
+//     // pose_est_. registration_.pcl_v_.p->removePointCloud ("cloud test");
+//     // pose_est_. registration_.pcl_v_.p->addPointCloud<pcl::PointXYZRGB>(cloud.makeShared(), "cloud test");
+//     // pose_est_. registration_.pcl_v_.p->spin ();
+//     //pcl::io::savePCDFileASCII("orbbec_cloud.pcd", cloud);	
+//     //ROS_INFO("pointcloud saved");
+    
+//     //分割点云采样
+//     pcl::VoxelGrid<PointT> grid; 
+// 		grid.setLeafSize (0.001, 0.001, 0.001); //设置体元网格的叶子大小
+// 		//下采样 源点云 
+// 		grid.setInputCloud (cloud.makeShared()); //设置输入点云
+// 		grid.filter (CloudAfterSample); //下采样和滤波，并存储在src中
 
-    //Convert the cloud to ROS message
-    sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(cloud,output);
+//     //Convert the cloud to ROS message
+//     sensor_msgs::PointCloud2 output;
+//     pcl::toROSMsg(CloudAfterSample,output);
 
-    output.header.stamp = ros::Time::now();
-    //output.header.frame_id = "/camera_rgb_optical_frame";
-    output.header.frame_id = "PhoXi3Dscanner_sensor";
-    publisher_.ourpointcloud_pub.publish(output);
-    ROS_INFO("Stop saving pointcloud");
-    pose_est_.bSaveCloud = false;
-  }
-}
+//     output.header.stamp = ros::Time::now();
+//     //output.header.frame_id = "/camera_rgb_optical_frame";
+//     output.header.frame_id = "PhoXi3Dscanner_sensor";
+//     publisher_.ourpointcloud_pub.publish(output);
+//     ROS_INFO("Stop saving pointcloud");
+//     pose_est_.bSaveCloud = false;
+//   }
+// }
 
 
   

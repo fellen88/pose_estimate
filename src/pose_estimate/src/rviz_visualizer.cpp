@@ -3,14 +3,14 @@
 
 rviz_visualizer::rviz_visualizer(const ros::NodeHandle& node_handle): node_handle_(node_handle)
 {
-    marker_pub = node_handle_.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+    marker_pub = node_handle_.advertise<visualization_msgs::Marker>("visualization_object", 10);
 }
 
 void rviz_visualizer :: updateBoundingBox(const PointCloud::Ptr cloud_src, bool downsample)
 { 
   // %Tag(MARKER_INIT)%
   visualization_msgs::Marker points, line_strip;
-  points.header.frame_id = line_strip.header.frame_id = boundingbox_linelist.header.frame_id = "/camera_rgb_optical_frame";
+  points.header.frame_id = line_strip.header.frame_id = boundingbox_linelist.header.frame_id = "/PhoXi3Dscanner_sensor";
   points.header.stamp = line_strip.header.stamp = boundingbox_linelist.header.stamp = ros::Time::now();
   points.ns = line_strip.ns = boundingbox_linelist.ns = "points_and_lines";
   points.action = line_strip.action = boundingbox_linelist.action = visualization_msgs::Marker::ADD;

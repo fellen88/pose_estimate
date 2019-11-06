@@ -20,6 +20,9 @@ class Publisher
   std_msgs::String TransformationMessage;
 
   ros::Publisher PointCloudError_pub; 
+  
+  ros::Publisher ObjectModel_pub;
+  sensor_msgs::PointCloud2 model_transformed;
 
   Publisher(const ros::NodeHandle& node_handle);
   void init();

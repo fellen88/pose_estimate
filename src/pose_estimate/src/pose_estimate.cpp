@@ -4,21 +4,21 @@ pose_estimate::pose_estimate(const ros::NodeHandle& nodehandle, bool DebugVisual
                rviz_v_(nodehandle),
                registration_(DebugVisualizer),
                CloudMask(new pcl::PointCloud<pcl::PointXYZ>),
+               CloudMaskAfterSample(new pcl::PointCloud<pcl::PointXYZ>),
                CloudModel (new pcl::PointCloud<pcl::PointXYZ>),
                CloudModelAfterSample (new pcl::PointCloud<pcl::PointXYZ>),
                CloudPreProcess (new pcl::PointCloud<pcl::PointXYZ>),
-               CloudEuclideanCluster(new pcl::PointCloud<pcl::PointXYZ>),
                CloudEuclideanClusterAfterSample(new pcl::PointCloud<pcl::PointXYZ>),
                CloudTransformedTarget(new pcl::PointCloud<pcl::PointXYZ>)
 {
-  label = "bottle_milktea";
-  depth_cols = 2064;
-  depth_rows = 1544;
-  camera_factor = 1000;
-  camera_cx = 310.535;
-  camera_cy = 239.405;
-  camera_fx = 515.73;
-  camera_fy = 515.45;
+  label = "default_label";
+  depth_cols = 2064;   //mask与depth 图像参数
+  depth_rows = 1544;   //mask与depth 图像参数
+  camera_factor = 1000;//深度单位 mm -> m
+  camera_cx = 1024.93; 
+  camera_cy = 782.256;
+  camera_fx = 2240.68;
+  camera_fy = 2240.68;
 
   thetax = 0;
   thetay = 0;
@@ -42,16 +42,14 @@ int pose_estimate::segmentation()
     {
       //获取深度图中对应点的深度值
       float d = depth_ptr->image.at<float>(ImgWidth,ImgHeight);
-      d = d / 1000;
 
       //有效范围内的点
-      //if((d > 0.4*camera_factor) && (d < 2*camera_factor))
+      if((d > 0.5*camera_factor) && (d < 1.2*camera_factor))
       {
 		  //判断mask中是否是物体的点
 		  if(mask_ptr != 0)
 		  {
 		    unsigned char t = mask_ptr->image.at<unsigned char>(ImgWidth,ImgHeight);
-        ROS_INFO("d = %d", t);
 		    if(t == 0)
 		    continue;
 		  }
@@ -63,6 +61,7 @@ int pose_estimate::segmentation()
 		  //计算这个点的空间坐标
 		  pcl::PointXYZ PointWorld;
 		  PointWorld.z = double(d)/camera_factor;
+      //ROS_INFO("D = %f", d);
 		  PointWorld.x = (ImgHeight - camera_cx)*PointWorld.z/camera_fx;
 		  PointWorld.y = (ImgWidth - camera_cy)*PointWorld.z/camera_fy;
 		  CloudMask->points.push_back(PointWorld);
@@ -171,8 +170,17 @@ int pose_estimate::Alignment()
       printf("\n");
       return 2;
     }
+
+    //分割点云采样
+    pcl::VoxelGrid<PointT> grid; 
+		grid.setLeafSize (0.004, 0.004, 0.004); //设置体元网格的叶子大小
+		//下采样 源点云 
+		grid.setInputCloud (CloudMask); //设置输入点云
+		grid.filter (*CloudMaskAfterSample); //下采样和滤波，并存储在src中
+
+
     //欧式聚类去处理离群点，保留最大点集，避免RGB—D对齐误差或者MaskRCNN识别误差导致分层现象
-    if(-1 == EuclideanCluster(CloudMask, CloudEuclideanCluster))
+    if(-1 == EuclideanCluster(CloudMaskAfterSample, CloudEuclideanClusterAfterSample))
     {
        ROS_INFO("EuclideanCluster can't work !");
        printf("******************************************************");
@@ -186,7 +194,7 @@ int pose_estimate::Alignment()
     {
       registration_.pcl_v_.p->addCoordinateSystem(0.2);
       //p->removePointCloud ("cloud mask");
-      //p->addPointCloud<pcl::PointXYZ>(CloudEuclideanCluster, "cloud EuclideanCluster");
+      //p->addPointCloud<pcl::PointXYZ>(CloudEuclideanClusterAfterSample, "cloud EuclideanCluster");
       //p->spin();
     }
  
@@ -209,11 +217,6 @@ int pose_estimate::Alignment()
  
     else
     {
-		pcl::VoxelGrid<PointT> grid; 
-		grid.setLeafSize (0.001, 0.001, 0.001); //设置体元网格的叶子大小
-		//下采样 源点云 
-		grid.setInputCloud (CloudEuclideanCluster); //设置输入点云
-		grid.filter (*CloudEuclideanClusterAfterSample); //下采样和滤波，并存储在src中
 		//下采样 目标点云
 		grid.setInputCloud (CloudModel);
 		grid.filter (*CloudModelAfterSample);
@@ -223,8 +226,8 @@ int pose_estimate::Alignment()
     ROS_INFO("CloudMask/CloudModel = %d !", pointRatio);
     // if(pointRatio > 60)
     //   {
-    //     CloudEuclideanCluster->points.clear();
     //     CloudEuclideanClusterAfterSample->points.clear();
+    //     CloudEuclideanClusterAfterSampleAfterSample->points.clear();
     //     ROS_INFO("CloudMask/CloudModel > 0.6 !");
     //     printf("******************************************************");
     //     printf("\n");
@@ -232,8 +235,8 @@ int pose_estimate::Alignment()
     //   }
     //   else if(pointRatio < 20)
     //   {
-    //     CloudEuclideanCluster->points.clear();
     //     CloudEuclideanClusterAfterSample->points.clear();
+    //     CloudEuclideanClusterAfterSampleAfterSample->points.clear();
     //     ROS_INFO("CloudMask/CloudModel < 0.2 !");
     //     printf("******************************************************");
     //     printf("\n");
@@ -242,30 +245,30 @@ int pose_estimate::Alignment()
      }    
     //cout << "points loaded from Model =" << CloudModel->width * CloudModel->height <<endl;
    
-    if(true == DEBUG_VISUALIZER)
-    {
-      registration_.pcl_v_.showCloudsLeft(CloudModel, CloudEuclideanCluster); //在左视区，显示源点云和目标点云
-      //showCloudsRight(CloudEuclideanClusterAfterSample, CloudModel);//在右视区，显示源点云和目标点云
-    }     
+    // if(true == DEBUG_VISUALIZER)
+    // {
+    //   registration_.pcl_v_.showCloudsLeft(CloudModel, CloudEuclideanClusterAfterSample); //在左视区，显示源点云和目标点云
+    //   //showCloudsRight(CloudEuclideanClusterAfterSampleAfterSample, CloudModel);//在右视区，显示源点云和目标点云
+    // }     
     //配准物体模型和场景中物体点云
     ROS_INFO("start Alignment");
     {
       pcl::ScopeTime scope_time("*PrePairAlign");//计算算法运行时间
-      //AngleObjectZtoCameraZ = registration_.prePairAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess,true);
-      registration_.prePairAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess, Pre_PairAlign_Transformation, true);
-      registration_.SAC_IA_PareAlign(CloudEuclideanCluster,CloudModel,CloudPreProcess, Pre_PairAlign_Transformation, true);
+      //AngleObjectZtoCameraZ = registration_.prePairAlign(CloudEuclideanClusterAfterSample,CloudModel,CloudPreProcess,true);
+      //registration_.prePairAlign(CloudEuclideanClusterAfterSample,CloudModel,CloudPreProcess, Pre_PairAlign_Transformation, true);
+      registration_.SAC_IA_PareAlign(CloudModelAfterSample, CloudEuclideanClusterAfterSample, CloudPreProcess, Pre_PairAlign_Transformation, false);
 
     }
     //ICP匹配
     {
       pcl::ScopeTime scope_time("*PairAlign");//计算算法运行时间
-      registration_.pairAlign (CloudEuclideanCluster, CloudPreProcess, CloudTransformedTarget, PairAlign_Transformation, true);
+      registration_.pairAlign (CloudEuclideanClusterAfterSample, CloudPreProcess, CloudTransformedTarget, PairAlign_Transformation, false);
 
       bSaveImage = false;
       bSaveCloud = false;
     }
   } //结束计算算法时间
-  CloudEuclideanCluster->points.clear();
+  CloudEuclideanClusterAfterSample->points.clear();
   CloudEuclideanClusterAfterSample->points.clear();
   if(true == DEBUG_VISUALIZER)
   {
@@ -276,14 +279,14 @@ int pose_estimate::Alignment()
   printf("\n");
   std::cout << "The Estimated Rotation and translation matrices are : \n" << std::endl;
   printf("\n");
-  printf("    | %6.3f %6.3f %6.3f | \n", PairAlign_Transformation(0, 0), PairAlign_Transformation(0, 1), PairAlign_Transformation(0, 2));
-  printf("R = | %6.3f %6.3f %6.3f | \n", PairAlign_Transformation(1, 0), PairAlign_Transformation(1, 1), PairAlign_Transformation(1, 2));
-  printf("    | %6.3f %6.3f %6.3f | \n", PairAlign_Transformation(2, 0), PairAlign_Transformation(2, 1), PairAlign_Transformation(2, 2));
+  printf("    | %6.3f %6.3f %6.3f | \n", Pre_PairAlign_Transformation(0, 0), Pre_PairAlign_Transformation(0, 1), Pre_PairAlign_Transformation(0, 2));
+  printf("R = | %6.3f %6.3f %6.3f | \n", Pre_PairAlign_Transformation(1, 0), Pre_PairAlign_Transformation(1, 1), Pre_PairAlign_Transformation(1, 2));
+  printf("    | %6.3f %6.3f %6.3f | \n", Pre_PairAlign_Transformation(2, 0), Pre_PairAlign_Transformation(2, 1), Pre_PairAlign_Transformation(2, 2));
   printf("\n");
-  printf("t = < %0.3f, %0.3f, %0.3f >\n", PairAlign_Transformation(0, 3), PairAlign_Transformation(1, 3), PairAlign_Transformation(2, 3));
+  printf("t = < %0.3f, %0.3f, %0.3f >\n", Pre_PairAlign_Transformation(0, 3), Pre_PairAlign_Transformation(1, 3), Pre_PairAlign_Transformation(2, 3));
   printf("\n");
 
-  GlobalTransformation = PairAlign_Transformation*registration_.MomentOfInertia_Transformation;
+  GlobalTransformation = PairAlign_Transformation * Pre_PairAlign_Transformation;
   std::cout << "The Global Rotation and translation matrices are : \n" << std::endl;
   printf("\n");
   printf("    | %6.3f %6.3f %6.3f | \n", GlobalTransformation(0, 0), GlobalTransformation(0, 1), GlobalTransformation(0, 2));

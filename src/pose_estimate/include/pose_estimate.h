@@ -55,9 +55,9 @@ class pose_estimate
     bool DEBUG_VISUALIZER;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr CloudMask;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr CloudMaskAfterSample;
     pcl::PointCloud<pcl::PointXYZ>::Ptr CloudModel;
     pcl::PointCloud<pcl::PointXYZ>::Ptr CloudPreProcess;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr CloudEuclideanCluster;
     pcl::PointCloud<pcl::PointXYZ>::Ptr CloudTransformedTarget;
     pcl::PointCloud<pcl::PointXYZ>::Ptr CloudEuclideanClusterAfterSample;
     pcl::PointCloud<pcl::PointXYZ>::Ptr CloudModelAfterSample;
