@@ -73,6 +73,7 @@ class pose_estimate
     double thetax;
     double thetay;
     double thetaz;
+    // Eigen::Quaterniond quaternion;
 
     pose_estimate(const ros::NodeHandle& nodehandle, bool DebugVisualizer);
     int segmentation();

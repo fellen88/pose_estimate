@@ -339,5 +339,10 @@ void pose_estimate::udateTF()
   thetax = euler_Angle[2];
   thetay = euler_Angle[1];
   thetaz = euler_Angle[0];
+  // quaternion(4) = 0.5 * sqrt(1 + Rotation_matrix(1,1) + Rotation_matrix(2,2) + Rotation_matrix(3,3));
+  // quaternion(1) = (Rotation_matrix(3,2)-Rotation_matrix(2,3))/(4*quaternion(4));
+  // quaternion(2) = (Rotation_matrix(1,3)-Rotation_matrix(3,1))/(4*quaternion(4));
+  // quaternion(3) = (Rotation_matrix(2,1)-Rotation_matrix(1,2))/(4*quaternion(4));
+
 }
 
