@@ -38,19 +38,19 @@ int main (int argc, char** argv)
   if(DEBUG_LABEL == NULL)
   {
     DEBUG_VISUALIZER = false; 
-    cout << "pcl_visualizer off" << endl;
-    cout << "waiting for message..." << endl;
+    std::cout << "pcl_visualizer off" << std::endl;
+    std::cout << "waiting for message..." << std::endl;
   }
   // 输入参数判断，“-v”可视化算法过程
   else if(strcmp(DEBUG_LABEL, "-v") == 0)
   {
     DEBUG_VISUALIZER = true; 
-    cout << "pcl_visualizer on" << endl;
-    cout << "waiting for message..." << endl;
+    std::cout << "pcl_visualizer on" << std::endl;
+    std::cout << "waiting for message..." << std::endl;
   }
   else
   {
-    cout << "rosrun parameters error!" << endl;
+    std::cout << "rosrun parameters error!" << std::endl;
   }
   // Initialize ROS
   ros::init (argc, argv, "pose_estimate");

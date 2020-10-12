@@ -2,7 +2,7 @@
 #include "3d_registration.h"
 #include <math.h>
 
-registration::registration(bool DebugVisualizer): pcl_v_(DebugVisualizer)
+registration::registration(bool DebugVisualizer)//: pcl_v_(DebugVisualizer)
 {
   DEBUG_VISUALIZER = DebugVisualizer;
 }
@@ -77,37 +77,37 @@ void registration::SAC_IA_PareAlign(const PointCloud::Ptr cloud_src, const Point
 
 	//可视化
 
-	if (true == DEBUG_VISUALIZER)
-	{
-    pcl_v_.p->removePointCloud ("source_cloud_v1"); //根据给定的ID，从屏幕中去除一个点云。参数是ID
-    pcl_v_.p->removePointCloud ("target_cloud_v1");
+	// if (true == DEBUG_VISUALIZER)
+	// {
+  //   pcl_v_.p->removePointCloud ("source_cloud_v1"); //根据给定的ID，从屏幕中去除一个点云。参数是ID
+  //   pcl_v_.p->removePointCloud ("target_cloud_v1");
 
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> sources_cloud_color(source_filtered, 250, 0, 0);
-    pcl_v_.p->addPointCloud(source_filtered, sources_cloud_color, "source_cloud_v1", pcl_v_.vp_1);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> target_cloud_color(target_filtered, 0, 250, 0);
-    pcl_v_.p->addPointCloud(target_filtered, target_cloud_color, "target_cloud_v1", pcl_v_.vp_1);
-    pcl_v_.p->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "source_cloud_v1");
+  //   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> sources_cloud_color(source_filtered, 250, 0, 0);
+  //   pcl_v_.p->addPointCloud(source_filtered, sources_cloud_color, "source_cloud_v1", pcl_v_.vp_1);
+  //   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> target_cloud_color(target_filtered, 0, 250, 0);
+  //   pcl_v_.p->addPointCloud(target_filtered, target_cloud_color, "target_cloud_v1", pcl_v_.vp_1);
+  //   pcl_v_.p->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "source_cloud_v1");
 
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>aligend_cloud_color(transformed_cloud, 255, 0, 0);
-    pcl_v_.p->addPointCloud(transformed_cloud, aligend_cloud_color, "aligend_cloud_v2", pcl_v_.vp_2);
-    pcl_v_.p->addPointCloud(target_filtered, target_cloud_color, "target_cloud_v2", pcl_v_.vp_2);
-    pcl_v_.p->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "aligend_cloud_v2");
-    pcl_v_.p->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "target_cloud_v2");
+  //   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>aligend_cloud_color(transformed_cloud, 255, 0, 0);
+  //   pcl_v_.p->addPointCloud(transformed_cloud, aligend_cloud_color, "aligend_cloud_v2", pcl_v_.vp_2);
+  //   pcl_v_.p->addPointCloud(target_filtered, target_cloud_color, "target_cloud_v2", pcl_v_.vp_2);
+  //   pcl_v_.p->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "aligend_cloud_v2");
+  //   pcl_v_.p->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "target_cloud_v2");
 
-    pcl::registration::CorrespondenceEstimation<pcl::FPFHSignature33, pcl::FPFHSignature33> crude_cor_est;
-    boost::shared_ptr<pcl::Correspondences> cru_correspondences(new pcl::Correspondences);
-    crude_cor_est.setInputSource(source_fpfh);
-    crude_cor_est.setInputTarget(target_fpfh);
-    crude_cor_est.determineReciprocalCorrespondences(*cru_correspondences);
-    cout << "crude size is:" << cru_correspondences->size() << endl;
-    pcl_v_.p->addCorrespondences<pcl::PointXYZ>(source_filtered, target_filtered, *cru_correspondences, "correspondence", pcl_v_.vp_1);//添加显示对应点对
+  //   pcl::registration::CorrespondenceEstimation<pcl::FPFHSignature33, pcl::FPFHSignature33> crude_cor_est;
+  //   boost::shared_ptr<pcl::Correspondences> cru_correspondences(new pcl::Correspondences);
+  //   crude_cor_est.setInputSource(source_fpfh);
+  //   crude_cor_est.setInputTarget(target_fpfh);
+  //   crude_cor_est.determineReciprocalCorrespondences(*cru_correspondences);
+  //   cout << "crude size is:" << cru_correspondences->size() << endl;
+  //   pcl_v_.p->addCorrespondences<pcl::PointXYZ>(source_filtered, target_filtered, *cru_correspondences, "correspondence", pcl_v_.vp_1);//添加显示对应点对
 
-    PCL_INFO ("Press q to continue ICP.\n");
-    pcl_v_.p->spin();
+  //   PCL_INFO ("Press q to continue ICP.\n");
+  //   pcl_v_.p->spin();
 
-    pcl_v_.p->removePointCloud("aligend_cloud_v2");
-    pcl_v_.p->removePointCloud("target_cloud_v2");
-  }
+  //   pcl_v_.p->removePointCloud("aligend_cloud_v2");
+  //   pcl_v_.p->removePointCloud("target_cloud_v2");
+  // }
 }
 
 void registration::pairAlign (const PointCloud::Ptr cloud_src, const PointCloud::Ptr cloud_tgt, PointCloud::Ptr output, Eigen::Matrix4f &final_transform, bool downsample = false)
@@ -193,10 +193,10 @@ void registration::pairAlign (const PointCloud::Ptr cloud_src, const PointCloud:
     //std::cout<<"getLastIncrementalTransformation.sum: "<<reg.getLastIncrementalTransformation ().sum()<<endl;
     NumIteration = i;
     //显示当前配准状态，在窗口的右视区，简单的显示源点云和目标点云
-    if(true == DEBUG_VISUALIZER)
-    {
-      pcl_v_.showCloudsRight(points_with_normals_tgt, points_with_normals_src);    
-    }
+    // if(true == DEBUG_VISUALIZER)
+    // {
+    //   pcl_v_.showCloudsRight(points_with_normals_tgt, points_with_normals_src);    
+    // }
   }
 
   PCL_INFO ("Iteration Nr. %d.\n", NumIteration); //命令行显示迭代的次数
@@ -207,18 +207,18 @@ void registration::pairAlign (const PointCloud::Ptr cloud_src, const PointCloud:
   //*output += *cloud_src; // 拼接点云图（的点）点数数目是两个点云的点数和
   final_transform = targetToSource; //最终的变换。目标点云到源点云的变换矩阵
 
-  if(true == DEBUG_VISUALIZER)
-  {
-    pcl::visualization::PointCloudColorHandlerCustom<PointT> cloud_tgt_h (output, 0, 255, 0); //设置点云显示颜色，下同
-    pcl::visualization::PointCloudColorHandlerCustom<PointT> cloud_src_h (cloud_src, 255, 0, 0);
-    pcl_v_.p->addPointCloud (output, cloud_tgt_h, "target", pcl_v_.vp_2); //添加点云数据，下同
-    pcl_v_.p->addPointCloud (cloud_src, cloud_src_h, "source", pcl_v_.vp_2);
+  // if(true == DEBUG_VISUALIZER)
+  // {
+  //   pcl::visualization::PointCloudColorHandlerCustom<PointT> cloud_tgt_h (output, 0, 255, 0); //设置点云显示颜色，下同
+  //   pcl::visualization::PointCloudColorHandlerCustom<PointT> cloud_src_h (cloud_src, 255, 0, 0);
+  //   pcl_v_.p->addPointCloud (output, cloud_tgt_h, "target", pcl_v_.vp_2); //添加点云数据，下同
+  //   pcl_v_.p->addPointCloud (cloud_src, cloud_src_h, "source", pcl_v_.vp_2);
 
-    PCL_INFO ("Press q to clear the screen.\n");
-    pcl_v_.p->spin ();
+  //   PCL_INFO ("Press q to clear the screen.\n");
+  //   pcl_v_.p->spin ();
 
-    pcl_v_.p->removeAllShapes(); 
-    pcl_v_.p->removePointCloud ("source"); //根据给定的ID，从屏幕中去除一个点云。参数是ID
-    pcl_v_.p->removePointCloud ("target"); //根据给定的ID，从屏幕中去除一个点云。参数是ID
-  }
+  //   pcl_v_.p->removeAllShapes(); 
+  //   pcl_v_.p->removePointCloud ("source"); //根据给定的ID，从屏幕中去除一个点云。参数是ID
+  //   pcl_v_.p->removePointCloud ("target"); //根据给定的ID，从屏幕中去除一个点云。参数是ID
+  // }
 }

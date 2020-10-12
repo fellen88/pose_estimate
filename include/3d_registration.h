@@ -1,5 +1,5 @@
 
-#include "pcl_visualizer.h"
+//#include "pcl_visualizer.h"
 #include "3d_features.h"
 
 //Åä×¼
@@ -18,7 +18,7 @@ class registration
     public:
 
     bool DEBUG_VISUALIZER;
-    pcl_visualizer pcl_v_;
+    //pcl_visualizer pcl_v_;
 
     //prePairAlign transformation matrix
     pcl::registration::TransformationEstimationSVD<pcl::PointXYZ, pcl::PointXYZ>::Matrix4 MomentOfInertia_Transformation;

@@ -81,15 +81,15 @@ int pose_estimate::segmentation()
   std::vector<int> nan_indices;
   pcl::removeNaNFromPointCloud(*CloudMask, *CloudMask, nan_indices);
   CloudMask->is_dense = false;
-  if(true == DEBUG_VISUALIZER)
-  {
-    registration_.pcl_v_.p->removePointCloud ("target"); 
-    registration_.pcl_v_.p->removePointCloud ("source");
-    pcl::visualization::PointCloudColorHandlerCustom<PointT> Mask_h (CloudMask, 255, 255, 255);
-    registration_.pcl_v_.p->addPointCloud (CloudMask, Mask_h, "cloud_mask", registration_.pcl_v_.vp_1);
-    //p->addPointCloud<pcl::PointXYZ>(CloudMask, "cloud mask");
-    //p->spin();
-  }
+  // if(true == DEBUG_VISUALIZER)
+  // {
+  //   registration_.pcl_v_.p->removePointCloud ("target"); 
+  //   registration_.pcl_v_.p->removePointCloud ("source");
+  //   pcl::visualization::PointCloudColorHandlerCustom<PointT> Mask_h (CloudMask, 255, 255, 255);
+  //   registration_.pcl_v_.p->addPointCloud (CloudMask, Mask_h, "cloud_mask", registration_.pcl_v_.vp_1);
+  //   //p->addPointCloud<pcl::PointXYZ>(CloudMask, "cloud mask");
+  //   //p->spin();
+  // }
   return CloudMask->points.size();
 }
 
@@ -143,7 +143,7 @@ int pose_estimate::EuclideanCluster(const PointCloud::Ptr cloud_Segmentation, co
   }
   catch(int e)
   {
-    //cout << e.what() << endl;
+    //std::cout << e.what() << endl;
     PCL_INFO ("Points can't be used for EuclideanCluster !");
     printf("******************************************************");
     printf("\n");
@@ -190,26 +190,26 @@ int pose_estimate::Alignment()
     
     //清空CloudMask
     CloudMask->points.clear();
-    if(true == DEBUG_VISUALIZER)
-    {
-      registration_.pcl_v_.p->addCoordinateSystem(0.2);
-      //p->removePointCloud ("cloud mask");
-      //p->addPointCloud<pcl::PointXYZ>(CloudEuclideanClusterAfterSample, "cloud EuclideanCluster");
-      //p->spin();
-    }
+    // if(true == DEBUG_VISUALIZER)
+    // {
+    //   registration_.pcl_v_.p->addCoordinateSystem(0.2);
+    //   //p->removePointCloud ("cloud mask");
+    //   //p->addPointCloud<pcl::PointXYZ>(CloudEuclideanClusterAfterSample, "cloud EuclideanCluster");
+    //   //p->spin();
+    // }
  
     //根据label提取物体模型
     std::string ModelPath = "/home/siasuncv/RobGrab/src/pose_estimate/3Dmodels/";
     //std::string ModelPath = "/home/model/catkin_ws2/src/pose_estimation/3Dmodels/";
     ModelPath = ModelPath + label + "_model.pcd";
-     //std::cout << "ModelPath : " << ModelPath << endl;
+     //std::cout << "ModelPath : " << ModelPath << std::endl;
      int pointRatio = 0;
      CloudModel->points.clear();
      CloudModelAfterSample->points.clear();
     if (pcl::io::loadPCDFile<pcl::PointXYZ> (ModelPath, *CloudModel) == -1) 
     {
       //PCL_ERROR ("Couldn't read file bottle_milktea_model.pcd \n");
-      std::cout << "Couldn't read file " << ModelPath <<endl;
+      std::cout << "Couldn't read file " << ModelPath <<std::endl;
       printf("******************************************************");
       printf("\n");
       return -1;
@@ -220,8 +220,8 @@ int pose_estimate::Alignment()
 		//下采样 目标点云
 		grid.setInputCloud (CloudModel);
 		grid.filter (*CloudModelAfterSample);
-		cout <<  CloudEuclideanClusterAfterSample->points.size()<<endl;
-		cout << CloudModelAfterSample->points.size()<<endl;
+		std::cout <<  CloudEuclideanClusterAfterSample->points.size()<<std::endl;
+		std::cout << CloudModelAfterSample->points.size()<<std::endl;
 		pointRatio = 100*(CloudEuclideanClusterAfterSample->points.size())/CloudModelAfterSample->points.size();
     ROS_INFO("CloudMask/CloudModel = %d !", pointRatio);
     // if(pointRatio > 60)
@@ -243,7 +243,7 @@ int pose_estimate::Alignment()
     //     return 2;
     //   }
      }    
-    //cout << "points loaded from Model =" << CloudModel->width * CloudModel->height <<endl;
+    //std::cout << "points loaded from Model =" << CloudModel->width * CloudModel->height <<std::endl;
    
     // if(true == DEBUG_VISUALIZER)
     // {
@@ -270,11 +270,11 @@ int pose_estimate::Alignment()
   } //结束计算算法时间
   CloudEuclideanClusterAfterSample->points.clear();
   CloudEuclideanClusterAfterSample->points.clear();
-  if(true == DEBUG_VISUALIZER)
-  {
-    PCL_INFO ("Press q to finish.\n");
-    registration_.pcl_v_.p->spin();
-  }
+  // if(true == DEBUG_VISUALIZER)
+  // {
+  //   PCL_INFO ("Press q to finish.\n");
+  //   registration_.pcl_v_.p->spin();
+  // }
   
   printf("\n");
   std::cout << "The Estimated Rotation and translation matrices are : \n" << std::endl;
