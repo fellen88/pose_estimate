@@ -1,14 +1,8 @@
 /build/
 /devel/
-devel_isolated/
-el/
-doc/
-el_isolated/
-venv/
+
 src/cv_bridge
 src/object_segment
-src/ocr
-src/offline
 src/orbbec_camera
 src/phoxi_camera
 src/robot
@@ -16,8 +10,11 @@ src/gqcnn
 src/autolab_core
 src/pointnet2
 
+/model_3d
+
 src/CMakeList.txt
-src/pose_estimate/3Dmodels
+
+
 .ycm_extra_conf.pyc
 .ycm_extra_conf.py
 .catkin_workspace

@@ -12,13 +12,13 @@ pose_estimate::pose_estimate(const ros::NodeHandle& nodehandle, bool DebugVisual
                CloudTransformedTarget(new pcl::PointCloud<pcl::PointXYZ>)
 {
   label = "default_label";
-  depth_cols = 2064;   //mask与depth 图像参数
-  depth_rows = 1544;   //mask与depth 图像参数
+  depth_cols = 1280;   //mask与depth 图像参数
+  depth_rows = 720;   //mask与depth 图像参数
   camera_factor = 1000;//深度单位 mm -> m
-  camera_cx = 1024.93; 
-  camera_cy = 782.256;
-  camera_fx = 2240.68;
-  camera_fy = 2240.68;
+  camera_cx = 639.53; 
+  camera_cy = 363.99;
+  camera_fx = 640.49;
+  camera_fy = 640.49;
 
   thetax = 0;
   thetay = 0;
@@ -41,10 +41,10 @@ int pose_estimate::segmentation()
     for(int ImgHeight = 0; ImgHeight < depth_cols; ImgHeight++ )
     {
       //获取深度图中对应点的深度值
-      float d = depth_ptr->image.at<float>(ImgWidth,ImgHeight);
+      ushort d = depth_ptr->image.at<ushort>(ImgWidth,ImgHeight);
 
       //有效范围内的点
-      if((d > 0.5*camera_factor) && (d < 1.2*camera_factor))
+      //if((d > 0.5*camera_factor) && (d < 1.2*camera_factor))
       {
 		  //判断mask中是否是物体的点
 		  if(mask_ptr != 0)
@@ -60,9 +60,11 @@ int pose_estimate::segmentation()
 		  }
 		  //计算这个点的空间坐标
 		  pcl::PointXYZ PointWorld;
-		  PointWorld.z = double(d)/camera_factor;
+		  PointWorld.z = (float)d/camera_factor;
+      std::cout<<d<<std::endl;
       //ROS_INFO("D = %f", d);
 		  PointWorld.x = (ImgHeight - camera_cx)*PointWorld.z/camera_fx;
+      std::cout<<PointWorld.z<<std::endl;
 		  PointWorld.y = (ImgWidth - camera_cy)*PointWorld.z/camera_fy;
 		  CloudMask->points.push_back(PointWorld);
       }
@@ -179,14 +181,14 @@ int pose_estimate::Alignment()
 		grid.filter (*CloudMaskAfterSample); //下采样和滤波，并存储在src中
 
 
-    //欧式聚类去处理离群点，保留最大点集，避免RGB—D对齐误差或者MaskRCNN识别误差导致分层现象
-    if(-1 == EuclideanCluster(CloudMaskAfterSample, CloudEuclideanClusterAfterSample))
-    {
-       ROS_INFO("EuclideanCluster can't work !");
-       printf("******************************************************");
-       printf("\n");
-       return 3;
-    }
+    // //欧式聚类去处理离群点，保留最大点集，避免RGB—D对齐误差或者MaskRCNN识别误差导致分层现象
+    // if(-1 == EuclideanCluster(CloudMaskAfterSample, CloudEuclideanClusterAfterSample))
+    // {
+    //    ROS_INFO("EuclideanCluster can't work !");
+    //    printf("******************************************************");
+    //    printf("\n");
+    //    return 3;
+    // }
     
     //清空CloudMask
     CloudMask->points.clear();
@@ -199,9 +201,9 @@ int pose_estimate::Alignment()
     // }
  
     //根据label提取物体模型
-    std::string ModelPath = "/home/siasuncv/RobGrab/src/pose_estimate/3Dmodels/";
+    std::string ModelPath = "/home/cv/grasp_3d/src/pose_estimate/model_3d/";
     //std::string ModelPath = "/home/model/catkin_ws2/src/pose_estimation/3Dmodels/";
-    ModelPath = ModelPath + label + "_model.pcd";
+    ModelPath = ModelPath + label + ".pcd";
      //std::cout << "ModelPath : " << ModelPath << std::endl;
      int pointRatio = 0;
      CloudModel->points.clear();
@@ -220,13 +222,13 @@ int pose_estimate::Alignment()
 		//下采样 目标点云
 		grid.setInputCloud (CloudModel);
 		grid.filter (*CloudModelAfterSample);
-		std::cout <<  CloudEuclideanClusterAfterSample->points.size()<<std::endl;
-		std::cout << CloudModelAfterSample->points.size()<<std::endl;
-		pointRatio = 100*(CloudEuclideanClusterAfterSample->points.size())/CloudModelAfterSample->points.size();
+		std::cout << "cloud_mask after sample: "<< CloudMaskAfterSample->points.size()<<std::endl;
+		std::cout << "cloud_model after sample: "<< CloudModelAfterSample->points.size()<<std::endl;
+		pointRatio = 100*(CloudMaskAfterSample->points.size())/CloudModelAfterSample->points.size();
     ROS_INFO("CloudMask/CloudModel = %d !", pointRatio);
     // if(pointRatio > 60)
     //   {
-    //     CloudEuclideanClusterAfterSample->points.clear();
+    //     CloudMaskAfterSample->points.clear();
     //     CloudEuclideanClusterAfterSampleAfterSample->points.clear();
     //     ROS_INFO("CloudMask/CloudModel > 0.6 !");
     //     printf("******************************************************");
@@ -256,20 +258,19 @@ int pose_estimate::Alignment()
       pcl::ScopeTime scope_time("*PrePairAlign");//计算算法运行时间
       //AngleObjectZtoCameraZ = registration_.prePairAlign(CloudEuclideanClusterAfterSample,CloudModel,CloudPreProcess,true);
       //registration_.prePairAlign(CloudEuclideanClusterAfterSample,CloudModel,CloudPreProcess, Pre_PairAlign_Transformation, true);
-      registration_.SAC_IA_PareAlign(CloudModelAfterSample, CloudEuclideanClusterAfterSample, CloudPreProcess, Pre_PairAlign_Transformation, false);
+      registration_.SAC_IA_PareAlign(CloudModelAfterSample, CloudMaskAfterSample, CloudPreProcess, Pre_PairAlign_Transformation, false);
 
     }
     //ICP匹配
     {
       pcl::ScopeTime scope_time("*PairAlign");//计算算法运行时间
-      registration_.pairAlign (CloudEuclideanClusterAfterSample, CloudPreProcess, CloudTransformedTarget, PairAlign_Transformation, false);
+      registration_.pairAlign (CloudMaskAfterSample, CloudPreProcess, CloudTransformedTarget, PairAlign_Transformation, false);
 
       bSaveImage = false;
       bSaveCloud = false;
     }
   } //结束计算算法时间
-  CloudEuclideanClusterAfterSample->points.clear();
-  CloudEuclideanClusterAfterSample->points.clear();
+  CloudMaskAfterSample->points.clear();
   // if(true == DEBUG_VISUALIZER)
   // {
   //   PCL_INFO ("Press q to finish.\n");

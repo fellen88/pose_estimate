@@ -17,7 +17,7 @@ void Listener::init()  //Listener类的init()方法
   subs_.push_back(node_handle_.subscribe<sensor_msgs::Image>("/segment/segment_image", 1, boost::bind(&Listener::Mask_Callback, this, _1, node_handle_)));
   //订阅深度图
   //cloud_sub_ = node_handle_.subscribe("/camera/depth_registered/points", 1, &Listener::Cloud_Callback, this);
-  depth_sub_ = node_handle_.subscribe<sensor_msgs::Image>("/phoxi_camera/depth_map", 1 , boost::bind(&Listener::Depth_Callback, this, _1));
+  depth_sub_ = node_handle_.subscribe<sensor_msgs::Image>("/camera/depth/raw_image", 1 , boost::bind(&Listener::Depth_Callback, this, _1));
   //订阅RC消息，采集图像
   RobotControl_sub_ = node_handle_.subscribe<std_msgs::String>("/Ready", 1,  boost::bind(&Listener::CaptureImage_Callback, this, _1));
   //订阅label
@@ -34,7 +34,7 @@ void Listener::CaptureImage_Callback(const std_msgs::String::ConstPtr& msg)
   ROS_INFO("RobotControl Callback");
   ROS_INFO("I heard: [%s]", msg->data.c_str());
 
-  if(strcmp(msg->data.c_str(), "ready") == 0)
+  //if(strcmp(msg->data.c_str(), "ready") == 0)
   {
     if(false == pose_est_.bSaveImage)
     {
@@ -43,6 +43,7 @@ void Listener::CaptureImage_Callback(const std_msgs::String::ConstPtr& msg)
     if(false == pose_est_.bSaveCloud)
     {
       pose_est_.bSaveCloud = true;
+      
     }
   }
 }
@@ -56,14 +57,14 @@ void Listener::Label_Callback(const std_msgs::String::ConstPtr& msg)
    
 void Listener::Depth_Callback(const sensor_msgs::ImageConstPtr& msg)
 {
-  //if(true == pose_est_.bSaveImage)
+  if(true == pose_est_.bSaveImage)
   {
      pose_est_.bSaveImage = false; 
      pose_est_.bUpdatingImage = true;
      ROS_INFO("Start saving depth image");
      try
     {
-      pose_est_.depth_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+      pose_est_.depth_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_16UC1);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -74,18 +75,18 @@ void Listener::Depth_Callback(const sensor_msgs::ImageConstPtr& msg)
     ROS_INFO("Stop saving depth image");
 
     int camera_factor = 1000;
-    float camera_cx = 1024.93; 
-    float camera_cy = 782.256;
-    float camera_fx = 2240.68;
-    float camera_fy = 2240.68;
+    float camera_cx = 639.53; 
+    float camera_cy = 363.99;
+    float camera_fx = 640.49;
+    float camera_fy = 640.49;
     pcl::PointCloud<pcl::PointXYZ> cloud;
 
-    for(int ImgWidth = 0; ImgWidth < 1544; ImgWidth++)
+    for(int ImgWidth = 0; ImgWidth < 720; ImgWidth++)
     {
-      for(int ImgHeight = 0; ImgHeight < 2064; ImgHeight++ )
+      for(int ImgHeight = 0; ImgHeight < 1280; ImgHeight++ )
       {
         //获取深度图中对应点的深度值
-        float d = pose_est_.depth_ptr->image.at<float>(ImgWidth,ImgHeight);
+        uint d = pose_est_.depth_ptr->image.at<uint>(ImgWidth,ImgHeight);
 
         //有效范围内的点
         if((d > 0.5*camera_factor) && (d < 1.2*camera_factor))
@@ -179,7 +180,7 @@ void Listener::Mask_Callback(const sensor_msgs::ImageConstPtr& msg, ros::NodeHan
   
   //恢复订阅相机深度图
   //depth_sub_ = node_handle.subscribe("/camera/depth_registered/sw_registered/image_rect_raw", 1 , &Listener::Depth_Callback, this);
-  depth_sub_ = node_handle.subscribe("/phoxi_camera/depth_map", 1 , &Listener::Depth_Callback, this);
+  depth_sub_ = node_handle.subscribe("/camera/depth/raw_image", 1 , &Listener::Depth_Callback, this);
 }
 
 //订阅点云及可视化
